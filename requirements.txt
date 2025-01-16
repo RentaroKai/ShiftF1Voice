@@ -1,0 +1,12 @@
+sounddevice==0.4.6
+wavio==0.0.7
+numpy==1.24.3
+keyboard==0.13.5
+openai==0.28.0
+requests==2.31.0
+python-dotenv==1.0.0
+psutil==5.9.5
+pywin32==306; platform_system == "Windows"
+pyperclip==1.8.2
+pyautogui==0.9.54
+langdetect==1.0.9

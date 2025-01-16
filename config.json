@@ -1,0 +1,18 @@
+{
+    "backup_directory": "./backups",
+    "backup_retention_days": 30,
+    "hotkey": "shift+f24",
+    "cancel_hotkey": "shift+f23",
+    "post_process_hotkey": "shift+f22",
+    "window_position": {
+        "x": 0,
+        "y": 0
+    },
+    "audio": {
+        "samplerate": 16000,
+        "channels": 1,
+        "silence_threshold": 0.01,
+        "silence_duration": 10,
+        "device": null
+    }
+}
