@@ -469,6 +469,7 @@ class VoiceInputApp:
                 return
 
             # OpenAI APIで処理
+            sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'kamiya_ai_commonaicomand')))
             from Common_OpenAIAPI import generate_chat_response
 
             prompt = f"以下のテキストを、次の指示に従って編集してください:\n\n指示: {instruction}\n\nテキスト:\n{original_text}"
