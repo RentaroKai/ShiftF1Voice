@@ -195,15 +195,18 @@ class VoiceInputApp:
     def handle_post_process_hotkey(self, event):
         try:
             if keyboard.is_pressed('shift'):
-                self.logger.debug("Shift+F3 が押されました")
+                self.logger.info("=== Shift+F22 が押されました ===")
+                self.logger.info(f"現在の状態: is_post_processing={self.is_post_processing}, is_recording={self.is_recording}, is_processing={self.is_processing}")
                 if self.is_post_processing:
                     # 処理中なら録音を停止してOpenAIに送信
+                    self.logger.info("後処理モードが既にアクティブなため、停止処理を開始します")
                     self.stop_post_processing()
                 else:
                     # 処理中でなければ開始
+                    self.logger.info("後処理モードが非アクティブなため、開始処理を開始します")
                     self.start_post_processing()
         except Exception as e:
-            self.logger.error(f"後処理ホットキー処理中にエラー: {str(e)}")
+            self.logger.error(f"後処理ホットキー処理中にエラー: {str(e)}", exc_info=True)
 
     def handle_translate_hotkey(self, event):
         try:
@@ -381,7 +384,7 @@ class VoiceInputApp:
             # 現在の状態を表示
             status_msg = (
                 f"ホットキー '{self.hotkey}' を再設定しました\n"
-                f"���在の録音状態: {'録音中' if self.is_recording else '待機中'}"
+                f"現在の録音状態: {'録音中' if self.is_recording else '待機中'}"
             )
             messagebox.showinfo("キー状態", status_msg)
             self.logger.info(status_msg)
@@ -408,20 +411,26 @@ class VoiceInputApp:
 
     def start_post_processing(self):
         """テキスト後処理を開始"""
-        self.logger.info("テキスト後処理を開始します")
+        self.logger.info("=== 後処理モード開始 ===")
+        self.logger.info(f"開始時の状態: is_post_processing={self.is_post_processing}, is_recording={self.is_recording}, is_processing={self.is_processing}")
         if not self.is_post_processing:
             self.is_post_processing = True
             self.status_label.config(text="音声指示待ち")
             self.root.configure(bg='#b3e6ff')
             self.status_label.configure(bg='#b3e6ff')
+            self.logger.info("後処理モードの録音スレッドを開始します")
             threading.Thread(target=self.record_post_process_instruction).start()
+        self.logger.info(f"開始処理完了後の状態: is_post_processing={self.is_post_processing}, is_recording={self.is_recording}, is_processing={self.is_processing}")
 
     def record_post_process_instruction(self):
-        """後処理のめの音声指示を録音"""
+        """後処理のための音声指示を録音"""
+        self.logger.info("=== 後処理モードの録音開始 ===")
         try:
+            self.logger.info(f"録音開始前の状態: is_post_processing={self.is_post_processing}, is_recording={self.is_recording}")
             self.recorder.start_recording(self.on_post_process_silence_detected)
+            self.logger.info("録音を開始しました")
         except Exception as e:
-            self.logger.error(f"後処理指示の録音中にエラー: {str(e)}")
+            self.logger.error(f"後処理指示の録音中にエラー: {str(e)}", exc_info=True)
             self.reset_post_process_state()
 
     def on_post_process_silence_detected(self):
@@ -431,18 +440,23 @@ class VoiceInputApp:
 
     def process_post_process_instruction(self):
         """録音した指示を処理してテキストを更新"""
+        self.logger.info("=== 後処理モードの音声処理開始 ===")
         audio_file = None
         try:
             self.is_processing = True
             self.should_cancel = False
+            self.logger.info(f"処理開始時の状態: is_post_processing={self.is_post_processing}, is_recording={self.is_recording}, is_processing={self.is_processing}")
+            
             # 最新のバックアップファイルを取得
             backup_dir = self.config.get('backup_directory', './backups')
             files = [f for f in os.listdir(backup_dir) if f.endswith('_transcription.txt')]
             if not files:
+                self.logger.error("バックアップファイルが見つかりません")
                 raise FileNotFoundError("バックアップファイルが見つかりません")
 
             latest_file = max(files, key=lambda x: os.path.getctime(os.path.join(backup_dir, x)))
             file_path = os.path.join(backup_dir, latest_file)
+            self.logger.info(f"処理対象のバックアップファイル: {latest_file}")
 
             # 中断チェック
             if self.should_cancel:
@@ -458,15 +472,9 @@ class VoiceInputApp:
 
             # 音声指示をテキストに変換
             audio_file = self.recorder.get_audio_file()
+            self.logger.info(f"音声ファイルのパス: {audio_file}")
             instruction = self.transcriber.transcribe(audio_file)
-
-            # 中断チェック
-            if self.should_cancel:
-                self.logger.info("処理がキャンセルされました")
-                self.status_label.config(text="キャンセルされました")
-                self.root.configure(bg='#e6f3ff')
-                self.status_label.configure(bg='#e6f3ff')
-                return
+            self.logger.info(f"音声認識結果: {instruction}")
 
             # OpenAI APIで処理
             sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'kamiya_ai_commonaicomand')))
@@ -492,7 +500,7 @@ class VoiceInputApp:
                 self.status_label.configure(bg='#e6f3ff')
 
         except Exception as e:
-            self.logger.error(f"後処理中にエラー: {str(e)}")
+            self.logger.error(f"後処理中にエラー: {str(e)}", exc_info=True)
             messagebox.showerror("エラー", f"後処理中にエラーが発生しました：\n{e}")
         finally:
             self.is_processing = False
@@ -500,13 +508,17 @@ class VoiceInputApp:
             if audio_file and os.path.exists(audio_file):
                 os.remove(audio_file)
             self.reset_post_process_state()
+            self.logger.info(f"処理完了後の状態: is_post_processing={self.is_post_processing}, is_recording={self.is_recording}, is_processing={self.is_processing}")
 
     def reset_post_process_state(self):
         """後処理の状態をリセット"""
+        self.logger.info("=== 後処理モードの状態をリセット ===")
+        self.logger.info(f"リセット前の状態: is_post_processing={self.is_post_processing}, is_recording={self.is_recording}, is_processing={self.is_processing}")
         self.is_post_processing = False
         self.status_label.config(text="待機中")
         self.root.configure(bg='#e6f3ff')
         self.status_label.configure(bg='#e6f3ff')
+        self.logger.info(f"リセット後の状態: is_post_processing={self.is_post_processing}, is_recording={self.is_recording}, is_processing={self.is_processing}")
 
     def cancel_post_processing(self):
         """後処理をキャンセル"""
@@ -524,13 +536,15 @@ class VoiceInputApp:
 
     def stop_post_processing(self):
         """後処理の録音を停止してOpenAIに送信"""
-        self.logger.info("後処理の録音を停止します")
+        self.logger.info("=== 後処理モードの停止処理開始 ===")
+        self.logger.info(f"停止処理開始時の状態: is_post_processing={self.is_post_processing}, is_recording={self.is_recording}, is_processing={self.is_processing}")
         self.recorder.stop_recording()
         self.status_label.config(text="処理中")
         self.root.configure(bg='#ffb366')
         self.status_label.configure(bg='#ffb366')
-        # 音声処理を別スレッドで開始
+        self.logger.info("音声処理スレッドを開始します")
         threading.Thread(target=self.process_post_process_instruction).start()
+        self.logger.info(f"停止処理完了後の状態: is_post_processing={self.is_post_processing}, is_recording={self.is_recording}, is_processing={self.is_processing}")
 
     def run(self):
         try:
