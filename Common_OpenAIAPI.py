@@ -6,27 +6,25 @@ from typing import List, Dict, Any
 from pydantic import BaseModel
 import time
 
-
 DEFAULT_CHAT_MODEL = "gpt-4o"
-DEFAULT_VISION_MODEL = "gpt-4o" #
+DEFAULT_VISION_MODEL = "gpt-4o"
 DEFAULT_AUDIO_MODEL = "whisper-1"
-DEFAULT_4oAUDIO_MODEL = "gpt-4o-audio-preview"  # 
+DEFAULT_4oAUDIO_MODEL = "gpt-4o-audio-preview"
 DEFAULT_TEMPERATURE = 0.1
 DEFAULT_MAX_TOKENS = ""
+
 DEFAULT_IMAGE_MODEL = "dall-e-3"
 DEFAULT_IMAGE_SIZE = "1024x1024"
 DEFAULT_IMAGE_QUALITY = "hd"
 DEFAULT_IMAGE_STYLE = "vivid"
 DEFAULT_IMAGE_FOLDER = os.path.join(os.path.expanduser("~"), "Documents")
+
 DEFAULT_REALTIME_MODEL = "gpt-4o-realtime-preview"
 DEFAULT_VOICE = "alloy"
 
-# 
-api_key = os.getenv("OPENAI_API_KEY")#
+api_key = os.getenv("OPENAI_API_KEY")
 
-# 
-def get_client():
-    # 
+def get_client():    
     if 'SSL_CERT_FILE' in os.environ:
         del os.environ['SSL_CERT_FILE']
     api_key = os.getenv("OPENAI_API_KEY")
@@ -35,14 +33,7 @@ def get_client():
     openai.api_key = api_key
     return openai.OpenAI()
 
-#＿＿＿＿＿＿＿＿＿＿＿＿＿ここからは呼び出し＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿
-
-#チャット機能
 def generate_chat_response(system_prompt, user_message_content, max_tokens=DEFAULT_MAX_TOKENS, temperature=DEFAULT_TEMPERATURE, model_name=DEFAULT_CHAT_MODEL, retries=3):
-    """
-    OpenAIのチャットモデルを使用して、チャット応答を生成する関数。
-    サーバーがダウンしている場合には指定された回数だけ再試行します。
-    """
     client = get_client()
     for attempt in range(retries):
         try:
@@ -52,14 +43,11 @@ def generate_chat_response(system_prompt, user_message_content, max_tokens=DEFAU
                 "messages": []
             }
 
-            # システムプロンプトが空でない場合のみ追加
             if system_prompt:
                 params["messages"].append({"role": "system", "content": system_prompt})
 
-            # ユーザーメッセージを追加
             params["messages"].append({"role": "user", "content": user_message_content})
 
-            # max_tokensが有効な値（0より大きい整数）の場合のみ追加
             if isinstance(max_tokens, int) and max_tokens > 0:
                 params["max_tokens"] = max_tokens
 
@@ -71,12 +59,10 @@ def generate_chat_response(system_prompt, user_message_content, max_tokens=DEFAU
             print(f"Attempt {attempt + 1} failed: {e}")
             if attempt < retries - 1:
                 print("Retrying...")
-                time.sleep(10)  # 10秒待ってから再試行
+                time.sleep(10)
             else:
                 print("All attempts failed.")
                 return None
-#generate_chat_response("","こんばんわ","",1)
-#generate_chat_response("大阪人として返事して","こんばんわ",13,0)
 
 class ResponseStep(BaseModel):
     steps: List[str]
@@ -92,10 +78,6 @@ def generate_chat_responseStruct(messages: List[Dict[str, Any]], response_format
     )
     return response
 
-
-
-#ビジョン
-# Function to encode the image
 def encode_image(image_path):
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
@@ -127,22 +109,16 @@ def generate_vision_ai_api(image_path, prompt_text, model=DEFAULT_VISION_MODEL):
                 ]
             }
         ],
-        #"max_tokens": max_tokens
     }
     response = requests.post(
         "https://api.openai.com/v1/chat/completions",
         headers=headers,
         json=payload,
-        verify=certifi.where()  # Use certifi's certificate bundle
+        verify=certifi.where()
     )
     return response.json()
 
-
-#音声から書き起こし
 def generate_transcribe_from_audio(audio_file, model=DEFAULT_AUDIO_MODEL, language="ja", prompt=""):
-    """
-    OpenAIのWhisperモデルを使用して、音声ファイルを文字起こしする関数。
-    """
     client = get_client()
     try:
         transcript = client.audio.transcriptions.create(
@@ -156,9 +132,7 @@ def generate_transcribe_from_audio(audio_file, model=DEFAULT_AUDIO_MODEL, langua
     except Exception as e:
         print(f"Error during transcription: {e}")
         return None
-#generate_transcribe_from_audio(audio_file)
 
-#画像生成
 def generate_image(prompt, model=DEFAULT_IMAGE_MODEL, n=1, size=DEFAULT_IMAGE_SIZE, response_format="b64_json", quality=DEFAULT_IMAGE_QUALITY, style=DEFAULT_IMAGE_STYLE, folder_path=DEFAULT_IMAGE_FOLDER, file_name_prefix="generated_image"):
     import time
     client = get_client()
@@ -179,7 +153,6 @@ def generate_image(prompt, model=DEFAULT_IMAGE_MODEL, n=1, size=DEFAULT_IMAGE_SI
     except Exception as e:
         print(f"Error during image generation: {e}")
         return None
-#generate_image("ねこ")
 
 def generate_audio_response(prompt, voice="alloy", format="wav", model=DEFAULT_4oAUDIO_MODEL):
     client = get_client()
@@ -214,8 +187,6 @@ def generate_audio_response(prompt, voice="alloy", format="wav", model=DEFAULT_4
         print(f"Error during audio generation: {e}")
         return None
 
-
-
 async def generate_realtime_audio(
     text,
     voice=DEFAULT_VOICE,
@@ -225,7 +196,6 @@ async def generate_realtime_audio(
     custom_filename=None,
     instructions=None
 ):
-    # 必要なモジュールを関数内でインポート
     import websockets
     import json
     from datetime import datetime
@@ -240,7 +210,6 @@ async def generate_realtime_audio(
     print(f"Text: {text}")
     print(f"Instructions: {instructions}")
 
-    # get_client()を使用してAPIキーを取得
     client = get_client()
     api_key = client.api_key
 
@@ -251,7 +220,6 @@ async def generate_realtime_audio(
             "Authorization": f"Bearer {api_key}",
             "OpenAI-Beta": "realtime=v1"
         }) as websocket:
-            # セッション設定を更新
             session_update = {
                 "type": "session.update",
                 "session": {
@@ -260,7 +228,6 @@ async def generate_realtime_audio(
                 }
             }
 
-            # instructionsが指定されている場合のみ追加
             if instructions:
                 session_update["session"]["instructions"] = instructions
 
@@ -268,7 +235,6 @@ async def generate_realtime_audio(
             print(f"Sending session update: {json.dumps(session_update, indent=2)}")
             await websocket.send(json.dumps(session_update))
 
-            # テキストメッセージを送信
             message = {
                 "type": "conversation.item.create",
                 "item": {
@@ -282,11 +248,9 @@ async def generate_realtime_audio(
             print(f"Sending message: {json.dumps(message, indent=2)}")
             await websocket.send(json.dumps(message))
 
-            # 応答生成要求を送信
             print("Sending response create request")
             await websocket.send(json.dumps({"type": "response.create"}))
 
-            # 音声データの受信
             audio_data = bytearray()
             event_count = 0
             async for message in websocket:
@@ -299,7 +263,7 @@ async def generate_realtime_audio(
                 elif 'error' in event:
                     print(f"\nError event received: {event}")
 
-                if event_count <= 5:  # 最初の5つのイベントのみ表示
+                if event_count <= 5:
                     print(f"\nReceived event: {event['type']}")
 
             print(f"\nTotal events received: {event_count}")
@@ -307,7 +271,6 @@ async def generate_realtime_audio(
             if not audio_data:
                 return None
 
-            # 音声ファイルの保存
             os.makedirs(output_dir, exist_ok=True)
 
             if custom_filename:
