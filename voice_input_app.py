@@ -41,7 +41,7 @@ class VoiceInputApp:
         if self.is_already_running():
             self.logger.info("既存のアプリケーションを終了します")
             self.terminate_existing_instance()
-            time.sleep(1)  # 既存プロセスの終了を待つ
+            time.sleep(0.3)  # 既存プロセスの終了を待つ時間を短縮
 
         # config.jsonのパスを取得
         if getattr(sys, 'frozen', False):
@@ -627,8 +627,8 @@ class VoiceInputApp:
                 continue
 
         if terminated_pid:
-            # 0.3秒待機して、プロセスが確実に終了したか確認
-            time.sleep(0.3)
+            # 0.3秒待機を0.1秒に短縮
+            time.sleep(0.1)
             try:
                 # プロセスが存在するかチェック
                 psutil.Process(terminated_pid)

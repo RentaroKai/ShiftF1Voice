@@ -45,25 +45,13 @@ def try_start_app():
     """アプリケーションの起動を試みる"""
     logger.info("アプリケーション起動処理を開始")
     try:
-        # 既存のポートチェック
-        sock = socket.socket()
-        sock.connect(('localhost', 47200))
-        sock.close()
-        # 既に起動している場合は、録音開始コマンドを送信
-        logger.info("アプリケーションは既に起動中です。録音開始コマンドを送信します")
-        subprocess.Popen(["python", "voice_input_app.py", "--start-recording"])
+        # 直接起動
+        subprocess.Popen(["python", "voice_input_app.py"])
+        logger.info("アプリケーションを起動しました")
         return True
-    except:
-        # 起動していない場合は新規起動
-        logger.info("アプリケーションを新規起動します")
-        try:
-            subprocess.Popen(["python", "voice_input_app.py", "--start-recording"])
-            # 起動完了まで少し待機
-            time.sleep(config.get('launcher_startup_delay', 2.0))
-            return False
-        except Exception as e:
-            logger.error(f"アプリケーションの起動に失敗しました: {str(e)}")
-            return False
+    except Exception as e:
+        logger.error(f"アプリケーションの起動に失敗しました: {str(e)}")
+        return False
 
 def setup_launcher_hotkey():
     """ランチャーのホットキーを設定"""
