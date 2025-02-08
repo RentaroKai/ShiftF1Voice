@@ -1,6 +1,7 @@
 import time
 import pyperclip
 import keyboard
+import pyautogui
 
 # 選択したテキストを取得する関数
 def get_selected_text():
@@ -36,3 +37,20 @@ def get_selected_text():
     except Exception as e:
         print(f"エラーが発生しました: {e}")
         return previous_clipboard
+
+def clear_text():
+    """
+    現在フォーカスされているテキスト入力欄の内容を全て消去します。
+    Ctrl+Aで全選択し、Deleteキーで削除します。
+    """
+    # 全選択（Ctrl+A）
+    keyboard.press('ctrl')
+    keyboard.press('a')
+    time.sleep(0.1)
+    keyboard.release('a')
+    keyboard.release('ctrl')
+    
+    # 削除
+    keyboard.press_and_release('delete')
+    
+    return True

@@ -19,6 +19,7 @@ from contextlib import contextmanager
 from Common_OpenAIAPI import generate_chat_response
 # TrayIcon クラスをインポート
 from tray_icon import TrayIcon
+from text_selection_utils import get_selected_text, clear_text
 
 def prevent_multiple_instances():
     """Prevent multiple instances of the application from running"""
@@ -70,6 +71,7 @@ class VoiceInputApp:
         self.hotkey = self.config.get('hotkey', 'shift+f1')
         self.cancel_hotkey = self.config.get('cancel_hotkey', 'shift+f2')
         self.translate_hotkey = 'shift+f21'
+        self.clear_hotkey = self.config.get('clear_hotkey', 'shift+f20')
         # ウィンドウ位置の設定を読み込み
         self.window_position = self.config.get('window_position', {'x': 100, 'y': 100})
 
@@ -160,6 +162,7 @@ class VoiceInputApp:
             keyboard.on_press_key(self.post_process_hotkey.split('+')[1], self.handle_post_process_hotkey)
             # 翻訳用のホットキー
             keyboard.on_press_key('f21', self.handle_translate_hotkey)
+            keyboard.add_hotkey(self.clear_hotkey, self.handle_clear_hotkey)
 
             self.logger.info(f"ホットキー '{self.hotkey}' と '{self.cancel_hotkey}' と '{self.post_process_hotkey}' と '{self.translate_hotkey}' を設定しました")
         except Exception as e:
@@ -215,6 +218,18 @@ class VoiceInputApp:
                 self.translate_selected_text()
         except Exception as e:
             self.logger.error(f"翻訳ホットキー処理中にエラー: {str(e)}")
+
+    def handle_clear_hotkey(self):
+        """
+        テキスト入力欄の内容を全て消去します。
+        """
+        try:
+            self.logger.info("テキスト消去を開始します")
+            clear_text()
+            self.logger.info("テキスト消去が完了しました")
+        except Exception as e:
+            self.logger.error(f"テキスト消去中にエラーが発生しました: {e}")
+            messagebox.showerror("エラー", f"テキスト消去中にエラーが発生しました: {e}")
 
     def translate_selected_text(self):
         try:

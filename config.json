@@ -4,6 +4,7 @@
     "hotkey": "shift+f24",
     "cancel_hotkey": "shift+f23",
     "post_process_hotkey": "shift+f22",
+    "clear_hotkey": "shift+f20",
     "window_position": {
         "x": 0,
         "y": 0
