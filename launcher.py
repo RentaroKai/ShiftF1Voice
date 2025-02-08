@@ -61,7 +61,7 @@ def setup_launcher_hotkey():
         keyboard.add_hotkey(hotkey, try_start_app)
         return True
     except Exception as e:
-        logger.error(f"ホットキーの設定に失敗しました: {str(e)}")
+        logger.error(f"ホットキーの設定に失敗: {str(e)}")
         return False
 
 if __name__ == "__main__":
