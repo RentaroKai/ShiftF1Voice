@@ -23,15 +23,16 @@ from text_selection_utils import get_selected_text, clear_text
 
 def prevent_multiple_instances():
     """Prevent multiple instances of the application from running"""
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        # Try to bind to a local port
-        sock.bind(('localhost', 47200))  # You can change this port number
-    except socket.error:
-        # Port is already in use, which means another instance is running
-        print("Another instance is already running")
-        sys.exit(0)
-    return sock
+    # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # try:
+    #     # Try to bind to a local port
+    #     sock.bind(('localhost', 47200))  # You can change this port number
+    # except socket.error:
+    #     # Port is already in use, which means another instance is running
+    #     print("Another instance is already running")
+    #     sys.exit(0)
+    # return sock
+    return None
 
 class VoiceInputApp:
     def __init__(self):
@@ -39,10 +40,10 @@ class VoiceInputApp:
         self.setup_logging()
         
         # 多重起動チェック
-        if self.is_already_running():
-            self.logger.info("既存のアプリケーションを終了します")
-            self.terminate_existing_instance()
-            time.sleep(0.3)  # 既存プロセスの終了を待つ時間を短縮
+        # if self.is_already_running():
+        #     self.logger.info("既存のアプリケーションを終了します")
+        #     self.terminate_existing_instance()
+        #     time.sleep(0.3)  # 既存プロセスの終了を待つ時間を短縮
 
         # config.jsonのパスを取得
         if getattr(sys, 'frozen', False):
@@ -59,10 +60,20 @@ class VoiceInputApp:
         except FileNotFoundError:
             # 設定ファイルが見つからない場合はデフォルト値を設定
             self.config = {
+                'backup_directory': './backups',
+                'backup_retention_days': 30,
                 'hotkey': 'shift+f1',
                 'cancel_hotkey': 'shift+f2',
                 'post_process_hotkey': 'shift+f3',
-                'window_position': {'x': 100, 'y': 100}
+                'clear_hotkey': 'shift+f4',
+                'window_position': {'x': 100, 'y': 100},
+                'audio': {
+                    'samplerate': 16000,
+                    'channels': 1,
+                    'silence_threshold': 0.01,
+                    'silence_duration': 10,
+                    'device': None
+                }
             }
             # 設定ファイルを作成
             with open('config.json', 'w', encoding='utf-8') as f:
@@ -70,8 +81,8 @@ class VoiceInputApp:
 
         self.hotkey = self.config.get('hotkey', 'shift+f1')
         self.cancel_hotkey = self.config.get('cancel_hotkey', 'shift+f2')
-        self.translate_hotkey = 'shift+f21'
-        self.clear_hotkey = self.config.get('clear_hotkey', 'shift+f20')
+        # self.translate_hotkey = 'shift+f21'  # 翻訳機能を無効化
+        self.clear_hotkey = self.config.get('clear_hotkey', 'shift+f4')
         # ウィンドウ位置の設定を読み込み
         self.window_position = self.config.get('window_position', {'x': 100, 'y': 100})
 
@@ -154,32 +165,44 @@ class VoiceInputApp:
             # 少し待機して、システムのホットキー状態をリセット
             time.sleep(0.1)
 
+            # ホットキーのキー部分を取得（例：'f24'）
+            hotkey_key = self.hotkey.split('+')[1].lower()
+            self.logger.info(f"設定するホットキー: {hotkey_key}")
+            self.logger.info(f"完全なホットキー設定: {self.hotkey}")
+
             # 録音開始/停止のホットキー
-            keyboard.on_press_key(self.hotkey.split('+')[1], self.handle_hotkey)
-            # キャンセル用のホットキー
+            keyboard.on_press_key(hotkey_key, self.handle_hotkey, suppress=False)
+            self.logger.info(f"ホットキーを設定しました: {hotkey_key}")
+
+            # その他のホットキー設定
             keyboard.on_press_key(self.cancel_hotkey.split('+')[1], self.handle_cancel_hotkey)
-            # 後処理用のホットキー
             keyboard.on_press_key(self.post_process_hotkey.split('+')[1], self.handle_post_process_hotkey)
-            # 翻訳用のホットキー
-            keyboard.on_press_key('f21', self.handle_translate_hotkey)
             keyboard.add_hotkey(self.clear_hotkey, self.handle_clear_hotkey)
 
-            self.logger.info(f"ホットキー '{self.hotkey}' と '{self.cancel_hotkey}' と '{self.post_process_hotkey}' と '{self.translate_hotkey}' を設定しました")
+            self.logger.info(f"全てのホットキーを設定しました")
+            self.logger.info(f"'{self.hotkey}', '{self.cancel_hotkey}', '{self.post_process_hotkey}'")
         except Exception as e:
             self.logger.error(f"ホットキー設定中にエラー: {str(e)}")
             messagebox.showerror("エラー", f"ホットキー設定エラー：\n{e}")
 
     def handle_hotkey(self, event):
         try:
+            # デバッグ情報を追加
+            self.logger.debug(f"キーイベント受信: {event.name}, Shift押下状態: {keyboard.is_pressed('shift')}")
+            
             # Shiftキーが押されているかチェック
             if keyboard.is_pressed('shift'):
-                self.logger.debug("Shift+F1 が押されました")
+                self.logger.debug(f"ホットキー {self.hotkey} が押されました")
+                self.logger.debug(f"現在の状態: is_recording={self.is_recording}")
                 if self.is_recording:
                     self.stop_recording()
                 else:
                     self.start_recording()
+            else:
+                self.logger.debug("Shiftキーが押されていないため、無視します")
         except Exception as e:
             self.logger.error(f"ホットキー処理中にエラー: {str(e)}")
+            self.logger.error(f"イベント情報: {event}")
 
     def handle_cancel_hotkey(self, event):
         try:
@@ -211,14 +234,6 @@ class VoiceInputApp:
         except Exception as e:
             self.logger.error(f"後処理ホットキー処理中にエラー: {str(e)}", exc_info=True)
 
-    def handle_translate_hotkey(self, event):
-        try:
-            if keyboard.is_pressed('shift'):
-                self.logger.debug("Shift+F21 が押されました")
-                self.translate_selected_text()
-        except Exception as e:
-            self.logger.error(f"翻訳ホットキー処理中にエラー: {str(e)}")
-
     def handle_clear_hotkey(self):
         """
         テキスト入力欄の内容を全て消去します。
@@ -230,40 +245,6 @@ class VoiceInputApp:
         except Exception as e:
             self.logger.error(f"テキスト消去中にエラーが発生しました: {e}")
             messagebox.showerror("エラー", f"テキスト消去中にエラーが発生しました: {e}")
-
-    def translate_selected_text(self):
-        try:
-            # 選択中のテキストを取得
-            selected_text = utils.get_selected_text()
-            print ("選択テキストは", selected_text)
-            if not selected_text:
-                self.logger.warning("テキストが選択されていません")
-                messagebox.showwarning("警告", "テキストが選択されていません")
-                return
-
-            # UIを翻訳中の状態に更新
-            self.status_label.config(text="翻訳中")
-            self.root.configure(bg='#90EE90')  # 薄い緑色
-            self.status_label.configure(bg='#90EE90')
-
-            # 翻訳を実行
-            translated_text = self.translator.translate(selected_text)
-            if translated_text:
-                # 翻訳結果で選択テキストを置換
-                utils.replace_selected_text(translated_text)
-                self.logger.info("翻訳が完了しました")
-            else:
-                self.logger.warning("翻訳結果が空です")
-                messagebox.showwarning("警告", "翻訳に失敗しました")
-
-        except Exception as e:
-            self.logger.error(f"翻訳処理中にエラー: {str(e)}")
-            messagebox.showerror("エラー", f"翻訳処理中にエラーが発生しました：\n{e}")
-        finally:
-            # UIを待機中の状態に戻す
-            self.status_label.config(text="待機中")
-            self.root.configure(bg='#e6f3ff')  # デフォルトの薄い青色
-            self.status_label.configure(bg='#e6f3ff')
 
     def toggle_recording(self, event=None):
         self.logger.info(f"ホットキーが押されました。現在の状態: recording={self.is_recording}")
@@ -689,6 +670,6 @@ class VoiceInputApp:
             messagebox.showerror("エラー", f"バックアップファイルを開く際にエラーが発生しました：\n{e}")
 
 if __name__ == "__main__":
-    socket_instance = prevent_multiple_instances()
+    # socket_instance = prevent_multiple_instances()
     app = VoiceInputApp()
     app.run()
