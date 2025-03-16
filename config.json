@@ -1,10 +1,10 @@
 {
     "backup_directory": "./backups",
     "backup_retention_days": 30,
-    "hotkey": "shift+f24",
-    "cancel_hotkey": "shift+f23",
-    "post_process_hotkey": "shift+f22",
-    "clear_hotkey": "shift+f20",
+    "hotkey": "shift+f1",
+    "cancel_hotkey": "shift+f2",
+    "post_process_hotkey": "shift+f3",
+    "clear_hotkey": "shift+f4",
     "window_position": {
         "x": 0,
         "y": 0
