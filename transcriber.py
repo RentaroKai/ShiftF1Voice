@@ -19,6 +19,8 @@ class Transcriber:
     def transcribe(self, audio_file):
         try:
             with open(audio_file, "rb") as file:
+                # modelパラメータを省略して呼び出す（Noneとして渡される）
+                # これにより、Common_OpenAIAPI.pyの変更が有効になる
                 transcript = generate_transcribe_from_audio(
                     file,
                     prompt=self.system_prompt

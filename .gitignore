@@ -1,0 +1,7 @@
+APP_Manager.json
+test_config.json
+test_transcriber_model.py
+__pycache__
+config.test.before.json
+logs
+backups
