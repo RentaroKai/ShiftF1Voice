@@ -68,7 +68,7 @@ class VoiceInputApp:
                 'clear_hotkey': 'shift+f4',
                 'window_position': {'x': 100, 'y': 100},
                 'audio': {
-                    'samplerate': 16000,
+                    'samplerate': 24000,
                     'channels': 1,
                     'silence_threshold': 0.01,
                     'silence_duration': 10,

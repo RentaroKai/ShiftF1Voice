@@ -8,7 +8,7 @@ import time
 class Recorder:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.samplerate = 16000
+        self.samplerate = 24000
         self.channels = 1
         self.filename = None
         self.recording = []

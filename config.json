@@ -10,7 +10,7 @@
         "y": 0
     },
     "audio": {
-        "samplerate": 16000,
+        "samplerate": 24000,
         "channels": 1,
         "silence_threshold": 0.01,
         "silence_duration": 10,
