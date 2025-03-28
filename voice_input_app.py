@@ -148,7 +148,7 @@ class VoiceInputApp:
         self.start_button = tk.Button(button_frame, text="録音", width=6, command=self.toggle_recording)
         self.start_button.pack(side='right', padx=2)
 
-        self.chat_button = tk.Button(button_frame, text="Chat", width=6, command=self.start_post_processing)
+        self.chat_button = tk.Button(button_frame, text="AI加工", width=6, command=self.start_post_processing)
         self.chat_button.pack(side='right', padx=2)
 
         # バックアップファイルを開くボタンを追加
@@ -263,7 +263,7 @@ class VoiceInputApp:
         self.status_label.config(text="録音中")
         self.root.configure(bg='#ff9999')
         self.status_label.configure(bg='#ff9999')
-        self.start_button.configure(text="停止")
+        self.start_button.configure(text="文字化")
         self.logger.info("録音スレッドを開始します")
         threading.Thread(target=self.recorder.start_recording, args=(self.on_silence_detected,)).start()
 
