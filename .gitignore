@@ -5,3 +5,6 @@ __pycache__
 config.test.before.json
 logs
 backups
+dist
+build
+startup_debug.log
