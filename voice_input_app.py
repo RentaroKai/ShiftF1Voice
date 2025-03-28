@@ -125,7 +125,7 @@ class VoiceInputApp:
         self.root = tk.Tk()
         self.root.title("Voice Input")
         # ウィンドウを少し大きくして新しいボタンを収容
-        self.root.geometry(f"150x90+{self.window_position['x']}+{self.window_position['y']}")
+        self.root.geometry(f"150x50+{self.window_position['x']}+{self.window_position['y']}")
         # 常に最前面に表示
         self.root.attributes('-topmost', True)
         # 背景色を設定（デフォルト状態: 薄い青）
